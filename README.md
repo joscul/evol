@@ -7,3 +7,10 @@ cd build
 cmake ..
 make
 ```
+
+## Build with xcode
+```
+mkdir xcode
+cd xcode
+cmake -G Xcode ..
+```

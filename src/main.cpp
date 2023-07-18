@@ -12,15 +12,18 @@ int main() {
 		return p[0] * p[1];
 	});
 
-	const std::vector<gp_node<int>> nodes = {
+	auto nodes = {
 		add,
 		mul,
 	};
 
-	auto tree = gp_tree<int>::make_random_tree(5, 6, nodes, 2);
+	auto tree = gp_tree<int>::make_random_tree(2, 5, 6, nodes);
+    
+    std::cout << gp_tree<int>::tree_to_string(tree);
+
+	std::cout << "output: " << tree.call({1, 1}) << std::endl;
 
 	//std::cout << tree << std::endl;
-	std::cout << gp_tree<int>::tree_to_string(tree);
 
 	return 0;
 }
