@@ -24,3 +24,4 @@ Just press play in xcode to build and run the examples.
 
 ## Windows (visual studio community)
 Just clone the repository inside visual studio, it has `cmake` support.
+You might need to go to the menu `Project -> Delete Cache and Reconfigure` to re-run the cmake config.
