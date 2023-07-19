@@ -23,6 +23,41 @@ public:
 	gp_tree(int num_params) {
 		m_num_params = num_params;
 	}
+    
+    gp_tree(const gp_tree<state> &tree) {
+        m_node = tree.m_node;
+        m_num_params = tree.m_num_params;
+        for (const auto &child : tree.m_children) {
+            auto ptr = std::make_unique<gp_tree<state>>(*child);
+            m_children.emplace_back(std::move(ptr));
+        }
+    }
+    
+    gp_tree<state> &operator=(const gp_tree<state> &tree) {
+        m_node = tree.m_node;
+        m_num_params = tree.m_num_params;
+        m_children.clear();
+        for (const auto &child : tree.m_children) {
+            auto ptr = std::make_unique<gp_tree<state>>(*child);
+            m_children.emplace_back(std::move(ptr));
+        }
+        
+        return *this;
+    }
+    
+    gp_tree(gp_tree<state> &&tree) {
+        m_node = std::move(tree.m_node);
+        m_num_params = tree.m_num_params;
+        m_children = std::move(tree.m_children);
+    }
+    
+    gp_tree &operator=(gp_tree<state> &&tree) {
+        m_node = std::move(tree.m_node);
+        m_num_params = tree.m_num_params;
+        m_children = std::move(tree.m_children);
+        
+        return *this;
+    }
 
 	state call(const std::vector<state> params) const {
 		if (params.size() != m_num_params) {
