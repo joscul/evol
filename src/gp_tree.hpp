@@ -77,7 +77,7 @@ public:
 
 	static std::string tree_to_string(const gp_tree<state> &tree, int depth = 0) {
 		std::string ret;
-		ret += std::string(depth, '\t') + "[" + tree.m_node.m_name + "("+std::to_string(tree.m_children.size())+")\n";
+		ret += std::string(depth, '\t') + "[" + tree.m_node.m_name + "] ("+std::to_string(tree.m_children.size())+")\n";
 		for (const auto &child : tree.m_children) {
 			ret += tree_to_string(*child, depth + 1);
 		}
