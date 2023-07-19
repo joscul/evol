@@ -1,16 +1,25 @@
 
-## Build and run examples
-Check out code and go to the directory
+## Build
+Check out the code and open a terminal at the location.
+### Linux
 ```
 mkdir build
 cd build
 cmake ..
 make
+./evol
 ```
 
-## Build with xcode
+## Mac OS (xcode)
 ```
 mkdir xcode
 cd xcode
 cmake -G Xcode ..
 ```
+This will create an Xcode project in the `xcode` folder. This command will open the project in xcode.
+```
+open evol.xcodeproj
+```
+Just press play in xcode to build and run the examples.
+
+## Windows (visual studio community)
