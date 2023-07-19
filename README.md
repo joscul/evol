@@ -23,3 +23,4 @@ open evol.xcodeproj
 Just press play in xcode to build and run the examples.
 
 ## Windows (visual studio community)
+Just clone the repository inside visual studio, it has `cmake` support.
