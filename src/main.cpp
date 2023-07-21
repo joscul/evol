@@ -3,6 +3,7 @@
 #include <map>
 #include "gp_tree.hpp"
 #include "trainer.hpp"
+#include "uniform.hpp"
 
 int main() {
 
@@ -14,34 +15,31 @@ int main() {
 		return p[0] * p[1];
 	});
 
+	const gp_node<int> con("const", 0, [](auto p) {
+		return 5;
+	});
+
 	auto nodes = {
 		add,
 		mul,
+		con,
 	};
-    
-    auto tree1 = gp_tree<int>::make_random_tree(2, 5, 6, nodes);
-    auto tree2 = tree1;
-    
-    std::cout << gp_tree<int>::tree_to_string(tree1);
-    std::cout << gp_tree<int>::tree_to_string(tree2);
-    
-    return 0;
-    
+
     std::map<std::vector<int>, int> train_data;
     
     auto target_fun = [](int x, int y) {
-        return x*x*x + y*y;
+        return x*x*x + y*(y + 5) + 3;
     };
     
     for (int i = -50; i < 50; i++) {
-        int x = i;
-        int y = -i;
+        int x = uniform::uniform_int(-50, 50);
+        int y = uniform::uniform_int(-50, 50);
         train_data[{x, y}] = target_fun(x, y);
     }
     
 
-    trainer<int> trn(2, 5, 6, nodes);
-    trn.train(100, 100, [&train_data](const auto &gp_tree) {
+    trainer<int> trn(2, 15, 15, nodes);
+    trn.train(200, 500, [&train_data](const auto &gp_tree) {
         double score = 0;
         for (const auto &iter : train_data) {
             int output = gp_tree.call(iter.first);
@@ -51,9 +49,10 @@ int main() {
         return score;
     });
     
-    //auto best = trn.get_best();
+    auto best = trn.get_best();
     
-    //std::cout << gp_tree<int>::tree_to_string(*best);
+    std::cout << gp_tree<int>::tree_to_string(best);
+    std::cout << "score: " << trn.m_best_score << std::endl;
     //std::cout << "output: " << best->call({1, 1}) << std::endl;
 
 	return 0;
