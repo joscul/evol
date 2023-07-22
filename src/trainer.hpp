@@ -8,6 +8,7 @@
 #pragma once
 
 #include <vector>
+#include <execution>
 #include "gp_tree.hpp"
 
 template <typename state>
@@ -16,7 +17,8 @@ class trainer {
 public:
 	
 	const double m_prob_mutation = 0.2;
-	const double m_prob_crossover = 0.8;
+	const double m_prob_crossover = 0.2;
+	const double m_prob_mutate_constant = 0.2;
 	
 	int m_num_params;
 	int m_max_width;
@@ -50,11 +52,11 @@ public:
 		}
 		
 		// re-calculate all the scores.
-		std::transform(m_last_generation.cbegin(), m_last_generation.cend(), m_last_scores.begin(), utility_function);
+		std::transform(std::execution::par, m_last_generation.cbegin(), m_last_generation.cend(), m_last_scores.begin(), utility_function);
 		
 		std::vector<int> permutation(m_last_scores.size());
 		std::iota(permutation.begin(), permutation.end(), 0);
-		std::sort(permutation.begin(), permutation.end(), [&](int a, int b) {
+		std::sort(std::execution::par, permutation.begin(), permutation.end(), [&](int a, int b) {
 			return m_last_scores[a] < m_last_scores[b];
 		});
 		
@@ -74,14 +76,23 @@ public:
                 next_generation.emplace_back(std::move(mutated));
             }
 
-			auto parent1 = m_last_generation[permutation[uniform::uniform_int(0, percentile_10 - 1)]];
-			auto parent2 = m_last_generation[permutation[uniform::uniform_int(0, percentile_10 - 1)]];
+			if (uniform::uniform_double() < m_prob_crossover) {
+				auto parent1 = m_last_generation[permutation[uniform::uniform_int(0, percentile_10 - 1)]];
+				auto parent2 = m_last_generation[permutation[uniform::uniform_int(0, percentile_10 - 1)]];
 
-			parent1.crossover(m_prob_crossover, parent2);
+				parent1.crossover(parent2);
+				next_generation.emplace_back(std::move(parent1));
+				next_generation.emplace_back(std::move(parent2));
+			}
 
+			if (uniform::uniform_double() < m_prob_mutate_constant) {
+                auto mutated = m_last_generation[permutation[i]];
+                mutated.mutate_constant();
+                next_generation.emplace_back(std::move(mutated));
+			}
+
+			// also just add the inidividual to the next generation.
 			next_generation.emplace_back(std::move(me));
-			next_generation.emplace_back(std::move(parent1));
-			next_generation.emplace_back(std::move(parent2));
 		}
 		
 		m_last_generation = std::move(next_generation);
@@ -94,7 +105,6 @@ public:
 			run_generation(population_size, utility_function);
 			if (m_best_score == 0) break;
 		}
-
 	}
 	
 	gp_tree<state> get_best() {

@@ -39,7 +39,7 @@ int main() {
     
 
     trainer<int> trn(2, 15, 15, nodes);
-    trn.train(200, 500, [&train_data](const auto &gp_tree) {
+    trn.train(200, 100, [&train_data](const auto &gp_tree) {
         double score = 0;
         for (const auto &iter : train_data) {
             int output = gp_tree.call(iter.first);

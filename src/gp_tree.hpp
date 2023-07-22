@@ -97,32 +97,31 @@ public:
         if (random_child == NULL) return false;
 		if (random_child->m_children.size() > 0) {
             // replace random child with random subtree.
-            auto child_num = uniform::uniform_int(0, m_children.size());
+            auto child_num = uniform::uniform_int(0, m_children.size() - 1);
             m_children[child_num] = std::make_unique<gp_tree<state>>(make_random_tree(m_num_params, max_depth, max_width, nodes));
             return true;
 		}
 		return false;
 	}
 
-	bool mutate_constants(double mutate_prob) {
+	bool mutate_constant() {
 		// todo, implement ...
 		return false;
 	}
 
-	bool crossover(double crossover_prob, gp_tree &other) {
-		if (crossover_prob > uniform::uniform_double()) {
-			auto all_nodes1 = all_nodes();
-			auto all_nodes2 = other.all_nodes();
+	bool crossover(gp_tree &other) {
 
-			auto random_node1 = all_nodes1[uniform::uniform_int(0, all_nodes1.size() - 1)];
-			auto random_node2 = all_nodes2[uniform::uniform_int(0, all_nodes2.size() - 1)];
+		auto all_nodes1 = all_nodes();
+		auto all_nodes2 = other.all_nodes();
 
-			if (random_node1->m_children.size() && random_node2->m_children.size()) {
-				auto child1 = uniform::uniform_int(0, random_node1->m_children.size() - 1);
-				auto child2 = uniform::uniform_int(0, random_node2->m_children.size() - 1);
-				random_node1->m_children[child1].swap(random_node2->m_children[child2]);
-				return true;
-			}
+		auto random_node1 = all_nodes1[uniform::uniform_int(0, all_nodes1.size() - 1)];
+		auto random_node2 = all_nodes2[uniform::uniform_int(0, all_nodes2.size() - 1)];
+
+		if (random_node1->m_children.size() && random_node2->m_children.size()) {
+			auto child1 = uniform::uniform_int(0, random_node1->m_children.size() - 1);
+			auto child2 = uniform::uniform_int(0, random_node2->m_children.size() - 1);
+			random_node1->m_children[child1].swap(random_node2->m_children[child2]);
+			return true;
 		}
 		return false;
 	}
