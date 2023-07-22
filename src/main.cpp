@@ -7,16 +7,16 @@
 
 int main() {
 
-	const gp_node<int> add("add", 2, [](auto p) {
+	const gp_node<int> add("add", 2, 0, [](auto p, auto c) {
 		return p[0] + p[1];
 	});
 
-	const gp_node<int> mul("mul", 2, [](auto p) {
+	const gp_node<int> mul("mul", 2, 0, [](auto p, auto c) {
 		return p[0] * p[1];
 	});
 
-	const gp_node<int> con("const", 0, [](auto p) {
-		return 5;
+	const gp_node<int> con("const", 0, 1, [](auto p, auto c) {
+		return c[0];
 	});
 
 	auto nodes = {

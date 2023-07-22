@@ -67,8 +67,12 @@ public:
 		const int percentile_10 = permutation.size() * 0.1;
 		for (int i = 0; i < percentile_10; i++) {
             auto me = m_last_generation[permutation[i]];
-			auto new_individual = m_last_generation[permutation[i]];
-			new_individual.mutate(m_prob_mutation, m_max_depth, m_max_width, m_nodes);
+            
+            if (uniform::uniform_double() < m_prob_mutation) {
+                auto mutated = m_last_generation[permutation[i]];
+                mutated.mutate(m_max_depth, m_max_width, m_nodes);
+                next_generation.emplace_back(std::move(mutated));
+            }
 
 			auto parent1 = m_last_generation[permutation[uniform::uniform_int(0, percentile_10 - 1)]];
 			auto parent2 = m_last_generation[permutation[uniform::uniform_int(0, percentile_10 - 1)]];
@@ -76,7 +80,6 @@ public:
 			parent1.crossover(m_prob_crossover, parent2);
 
 			next_generation.emplace_back(std::move(me));
-			next_generation.emplace_back(std::move(new_individual));
 			next_generation.emplace_back(std::move(parent1));
 			next_generation.emplace_back(std::move(parent2));
 		}

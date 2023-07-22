@@ -66,46 +66,47 @@ public:
 		}
 
 		if (m_node.m_num_child == 0) {
-			return m_node.m_function(params);
+			return m_node.call(params);
 		}
 
 		std::vector<state> inp;
 		std::transform(m_children.cbegin(), m_children.cend(), std::back_inserter(inp), [&params](const auto &child) {
 			return child->call(params);
 		});
-		return m_node.m_function(inp);
+		return m_node.call(inp);
 	}
+    
+    std::vector<gp_tree<state> *> all_nodes() {
+        std::vector<gp_tree<state> *> ret;
+        ret.push_back(this);
+        for (const auto &child : m_children) {
+            auto sub = child->all_nodes();
+            ret.insert(ret.end(), sub.begin(), sub.end());
+        }
+        return ret;
+    }
+    
+    gp_tree<state> *random_node() {
+        auto nodes = all_nodes();
+        if (nodes.size() == 0) return NULL;
+        return nodes[uniform::uniform_int(0, nodes.size() - 1)];
+    }
 	
-	bool mutate(double mutate_prob, int max_depth, int max_width, const std::vector<gp_node<state>> &nodes) {
-		if (m_children.size() > 0) {
-			if (mutate_prob < uniform::uniform_double()) {
-				// replace first child with random subtree.
-				m_children[0] = std::make_unique<gp_tree<state>>(make_random_tree(m_num_params, max_depth, max_width, nodes));
-				return true;
-			} else if (m_children[0]->mutate(mutate_prob, max_depth - 1, max_width, nodes)) {
-				return true;
-			}
-		}
-		if (m_children.size() > 1) {
-			if (mutate_prob < uniform::uniform_double()) {
-				// replace first child with random subtree.
-				m_children[1] = std::make_unique<gp_tree<state>>(make_random_tree(m_num_params, max_depth, max_width, nodes));
-				return true;
-			} else if (m_children[1]->mutate(mutate_prob, max_depth - 1, max_width, nodes)) {
-				return true;
-			}
+	bool mutate(int max_depth, int max_width, const std::vector<gp_node<state>> &nodes) {
+        auto random_child = random_node();
+        if (random_child == NULL) return false;
+		if (random_child->m_children.size() > 0) {
+            // replace random child with random subtree.
+            auto child_num = uniform::uniform_int(0, m_children.size());
+            m_children[child_num] = std::make_unique<gp_tree<state>>(make_random_tree(m_num_params, max_depth, max_width, nodes));
+            return true;
 		}
 		return false;
 	}
 
-	std::vector<gp_tree<state> *> all_nodes() {
-		std::vector<gp_tree<state> *> ret;
-		ret.push_back(this);
-		for (const auto &child : m_children) {
-			auto sub = child->all_nodes();
-			ret.insert(ret.end(), sub.begin(), sub.end());
-		}
-		return ret;
+	bool mutate_constants(double mutate_prob) {
+		// todo, implement ...
+		return false;
 	}
 
 	bool crossover(double crossover_prob, gp_tree &other) {
@@ -130,7 +131,7 @@ public:
 
 		const int param = uniform::uniform_int(0, num_params - 1);
 
-		gp_node<state> param_node("param_" + std::to_string(param), 0, [param](auto p) {
+		gp_node<state> param_node("param_" + std::to_string(param), 0, 0, [param](auto p, auto c) {
 			return p[param];
 		});
 
