@@ -2,3 +2,4 @@ build/**
 xcode/**
 out/**
 **.swp
+.DS_Store

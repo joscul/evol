@@ -24,6 +24,11 @@ public:
 	gp_tree(int num_params = 0) {
 		m_num_params = num_params;
 	}
+
+	gp_tree(const gp_node<state> &node, int num_params = 0) {
+		m_node = node;
+		m_num_params = num_params;
+	}
 	
 	gp_tree(const gp_tree<state> &tree) {
 		m_node = tree.m_node;
@@ -75,38 +80,66 @@ public:
 		});
 		return m_node.call(inp);
 	}
-    
-    std::vector<gp_tree<state> *> all_nodes() {
-        std::vector<gp_tree<state> *> ret;
-        ret.push_back(this);
-        for (const auto &child : m_children) {
-            auto sub = child->all_nodes();
-            ret.insert(ret.end(), sub.begin(), sub.end());
-        }
-        return ret;
-    }
-    
-    gp_tree<state> *random_node() {
-        auto nodes = all_nodes();
-        if (nodes.size() == 0) return NULL;
-        return nodes[uniform::uniform_int(0, nodes.size() - 1)];
-    }
+	
+	std::vector<gp_tree<state> *> all_nodes(const std::string &type = "") {
+		std::vector<gp_tree<state> *> ret;
+		if (type == "") ret.push_back(this);
+		else if (type == m_node.m_name) ret.push_back(this);
+		for (const auto &child : m_children) {
+			auto sub = child->all_nodes(type);
+			ret.insert(ret.end(), sub.begin(), sub.end());
+		}
+		return ret;
+	}
+	
+	gp_tree<state> *random_node(const std::string &type = "") {
+		auto nodes = all_nodes(type);
+		if (nodes.size() == 0) return NULL;
+		return nodes[uniform::uniform_int(0, nodes.size() - 1)];
+	}
 	
 	bool mutate(int max_depth, int max_width, const std::vector<gp_node<state>> &nodes) {
-        auto random_child = random_node();
-        if (random_child == NULL) return false;
+		auto random_child = random_node();
+		if (random_child == NULL) return false;
 		if (random_child->m_children.size() > 0) {
-            // replace random child with random subtree.
-            auto child_num = uniform::uniform_int(0, m_children.size() - 1);
-            m_children[child_num] = std::make_unique<gp_tree<state>>(make_random_tree(m_num_params, max_depth, max_width, nodes));
-            return true;
+			// replace random child with random subtree.
+			auto child_num = uniform::uniform_int(0, m_children.size() - 1);
+			m_children[child_num] = std::make_unique<gp_tree<state>>(make_random_tree(m_num_params, max_depth, max_width, nodes));
+			return true;
 		}
 		return false;
 	}
 
 	bool mutate_constant() {
-		// todo, implement ...
+
+		auto random_child = random_node("const");
+		if (random_child == NULL) return false;
+
+		random_child->m_node.m_constants[0] += uniform::uniform_int(-1, 1);
+
 		return false;
+	}
+
+	void minify(double score, std::function<double(const gp_tree<state> &)> utility_function, const gp_node<state> &null_node) {
+	
+		auto nodes = all_nodes();
+		auto tmp = std::make_unique<gp_tree<state>>(null_node, m_num_params);
+
+		// Try to replace each node with a null node.
+		for (const auto &node : nodes) {
+			for (auto &child : node->m_children) {
+				child.swap(tmp);
+				const double new_score = utility_function(*this);
+				if (new_score <= score) {
+					goto end;
+				}
+				child.swap(tmp);
+
+				// also try to 
+			}
+		}
+		end:
+		return;
 	}
 
 	bool crossover(gp_tree &other) {
@@ -159,7 +192,15 @@ public:
 
 	static std::string tree_to_string(const gp_tree<state> &tree, int depth = 0) {
 		std::string ret;
-		ret += std::string(depth, '\t') + "[" + tree.m_node.m_name + "] ("+std::to_string(tree.m_children.size())+")\n";
+		if (tree.m_node.m_constants.size() > 0) {
+			std::string cns;
+			for (auto &c : tree.m_node.m_constants) {
+				cns += ", " + std::to_string(c);
+			}
+			ret += std::string(depth, '\t') + "[" + tree.m_node.m_name + "] ("+std::to_string(tree.m_children.size())+") (" + cns + ")\n";
+		} else {
+			ret += std::string(depth, '\t') + "[" + tree.m_node.m_name + "] ("+std::to_string(tree.m_children.size())+")\n";
+		}
 		for (const auto &child : tree.m_children) {
 			ret += tree_to_string(*child, depth + 1);
 		}
