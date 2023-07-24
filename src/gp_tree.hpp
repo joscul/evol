@@ -120,26 +120,37 @@ public:
 		return false;
 	}
 
-	void minify(double score, std::function<double(const gp_tree<state> &)> utility_function, const gp_node<state> &null_node) {
+	bool minify(double score, std::function<double(const gp_tree<state> &)> utility_function, const gp_node<state> &null_node) {
 	
 		auto nodes = all_nodes();
 		auto tmp = std::make_unique<gp_tree<state>>(null_node, m_num_params);
 
-		// Try to replace each node with a null node.
 		for (const auto &node : nodes) {
 			for (auto &child : node->m_children) {
-				child.swap(tmp);
-				const double new_score = utility_function(*this);
-				if (new_score <= score) {
-					goto end;
+				// Try to replace each node with a null node.
+				if (child->m_node.m_name != "null") {
+					child.swap(tmp);
+					const double new_score = utility_function(*this);
+					if (new_score <= score) {
+						return true;
+					}
+					child.swap(tmp);
 				}
-				child.swap(tmp);
 
-				// also try to 
+				// Try to replace a node with one of its children.
+				for (auto &child_child : child->m_children) {
+					// So try to replace child and child_child
+					child.swap(child_child);
+					const double new_score = utility_function(*this);
+					if (new_score <= score) {
+						child_child.reset(nullptr);
+						return true;
+					}
+					child.swap(child_child);
+				}
 			}
 		}
-		end:
-		return;
+		return false;
 	}
 
 	bool crossover(gp_tree &other) {

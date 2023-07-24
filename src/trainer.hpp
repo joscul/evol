@@ -102,7 +102,7 @@ public:
 		m_last_scores.resize(m_last_generation.size());
 	}
 
-	void run_minifier(int population_size, std::function<double(const gp_tree<state> &)> utility_function) {
+	bool run_minifier(int population_size, std::function<double(const gp_tree<state> &)> utility_function) {
 		
 		// re-calculate all the scores.
 		std::transform(m_last_generation.cbegin(), m_last_generation.cend(), m_last_scores.begin(), utility_function);
@@ -115,10 +115,14 @@ public:
 		});
 		
 		const int percentile_10 = permutation.size() * 0.1;
+		bool did_minify = false;
 		for (int i = 0; i < percentile_10; i++) {
 			auto me = &m_last_generation[permutation[i]];
-			me->minify(m_last_scores[permutation[i]], utility_function, m_null_node);
+			if (me->minify(m_last_scores[permutation[i]], utility_function, m_null_node)) {
+				did_minify = true;
+			}
 		}
+		return did_minify;
 	}
 	
 	void train(int population_size, int num_generations, std::function<double(const gp_tree<state> &)> utility_function) {
@@ -128,8 +132,22 @@ public:
 			if (i % 10 == 0) run_minifier(population_size, utility_function);
 			if (m_best_score == 0) break;
 		}
-		for (int i = 0; i < 100; i++) {
-			run_minifier(population_size, utility_function);
+		while (run_minifier(population_size, utility_function)) {
+		}
+
+		// re-calculate all the scores.
+		std::transform(m_last_generation.cbegin(), m_last_generation.cend(), m_last_scores.begin(), utility_function);
+		
+		// find permutation that sorts the population by lowest fitness first.
+		std::vector<int> permutation(m_last_scores.size());
+		std::iota(permutation.begin(), permutation.end(), 0);
+		std::sort(permutation.begin(), permutation.end(), [&](int a, int b) {
+			return m_last_scores[a] < m_last_scores[b];
+		});
+		for (int i = 0; i < 20; i++) {
+			auto me = &m_last_generation[permutation[i]];
+			std::cout << gp_tree<int>::tree_to_string(*me);
+			std::cout << "score: " << m_last_scores[permutation[i]] << std::endl << std::endl;
 		}
 	}
 	

@@ -41,7 +41,7 @@ int main() {
 		train_data[{x, y}] = target_fun(x, y);
 	}
 
-	trainer<int> trn(2, 15, 15, nodes, null_node);
+	trainer<int> trn(2, 10, 10, nodes, null_node);
 	trn.train(1000, 500, [&train_data](const auto &gp_tree) {
 		double score = 0;
 		for (const auto &iter : train_data) {
