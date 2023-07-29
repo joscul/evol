@@ -7,19 +7,19 @@
 
 int main() {
 
-	const gp_node<int> null_node("null", 0, 0, [](auto p, auto c) {
+	const gp_node<int> null_node("null", 0, 0, [](auto node, auto p, auto c) {
 		return 0;
 	});
 	
-	const gp_node<int> add("add", 2, 0, [](auto p, auto c) {
+	const gp_node<int> add("add", 2, 0, [](auto node, auto p, auto c) {
 		return p[0] + p[1];
 	});
 
-	const gp_node<int> mul("mul", 2, 0, [](auto p, auto c) {
+	const gp_node<int> mul("mul", 2, 0, [](auto node, auto p, auto c) {
 		return p[0] * p[1];
 	});
 
-	const gp_node<int> con("const", 0, 1, [](auto p, auto c) {
+	const gp_node<int> con("const", 0, 1, [](auto node, auto p, auto c) {
 		return c[0];
 	});
 
@@ -28,6 +28,10 @@ int main() {
 		mul,
 		con,
 	};
+
+	/*auto new_individual = gp_tree<int>::make_random_tree(2, 4, 10, nodes);
+	std::cout << "depth: " << new_individual.depth() << std::endl;
+	return 0;*/
 
 	std::map<std::vector<int>, int> train_data;
 	

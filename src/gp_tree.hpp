@@ -67,6 +67,7 @@ public:
 
 	state call(const std::vector<state> params) const {
 		if (params.size() != m_num_params) {
+			std::cout << tree_to_string(*this);
 			throw std::runtime_error("Expected " + std::to_string(m_num_params) + " parameters but got " + std::to_string(params.size()));
 		}
 
@@ -174,15 +175,15 @@ public:
 
 		const int param = uniform::uniform_int(0, num_params - 1);
 
-		gp_node<state> param_node("param_" + std::to_string(param), 0, 0, [param](auto p, auto c) {
+		gp_node<state> param_node("param_" + std::to_string(param), 0, 0, [param](auto node, auto p, auto c) {
 			return p[param];
 		});
 
 		gp_tree ret(num_params);
 		ret.m_node = param_node;
 
-		if (max_depth <= 0) return ret;
-		if (max_width <= 0) return ret;
+		if (max_depth <= 1) return ret;
+		if (max_width <= 1) return ret;
 
 		// add child tree
 		const int node_num = uniform::uniform_int(0, nodes.size());
@@ -214,6 +215,55 @@ public:
 		}
 		for (const auto &child : tree.m_children) {
 			ret += tree_to_string(*child, depth + 1);
+		}
+		return ret;
+	}
+
+	int size() const {
+		int size = 1;
+		for (const auto &child : m_children) {
+			size += child->size();
+		}
+		return size;
+	}
+
+	int depth() const {
+		int depth = 1;
+		int largest_child_depth = 0;
+		for (const auto &child : m_children) {
+			auto child_depth = child->depth();
+			if (child_depth > largest_child_depth) {
+				largest_child_depth = child_depth;
+			}
+		}
+		depth += largest_child_depth;
+		return depth;
+	}
+
+	std::string hash_str() const {
+		std::string ret = m_node.m_name + "_" + std::to_string(m_node.m_num_child) + std::to_string(m_node.m_num_const) + ";";
+		for (const auto &child : m_children) {
+			ret += child->hash_str();
+		}
+		return ret;
+	}
+
+	/*
+	 * Returns a map with the hash of the subtree as key and a pointer to the subtree as value.
+	 * A hash of a tree should identify the exact tree.
+	 * */
+	std::map<long, const gp_tree<state> *> hash_map() const {
+		std::map<long, const gp_tree<state> *> ret;
+		std::hash<std::string> hasher;
+
+		// we only want to add hashes for nodes that has children. other nodes are end nodes and are useless.
+		if (m_children.size()) {
+			auto hash_str = tree_to_string(*this);
+			ret[hasher(hash_str)] = this;
+		}
+		for (const auto &child : m_children) {
+			auto other = child->hash_map();
+			ret.merge(other);
 		}
 		return ret;
 	}
